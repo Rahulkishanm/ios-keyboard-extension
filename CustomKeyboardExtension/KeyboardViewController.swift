@@ -17,11 +17,13 @@ class KeyboardViewController: UIInputViewController {
 	var keys: [UIButton] = []
 	var paddingViews: [UIButton] = []
 	var backspaceTimer: Timer?
-	
+    var amount=":"
+    var merchantId=""
 	enum KeyboardState{
 		case letters
 		case numbers
 		case symbols
+        case payments
 	}
 	
 	enum ShiftButtonState {
@@ -75,6 +77,7 @@ class KeyboardViewController: UIInputViewController {
 		keyboardView = keyboardNib.instantiate(withOwner: self, options: nil)[0] as? UIView		 		
 		view.addSubview(keyboardView)
 		loadKeys()
+       
 	}
 	
 	func addPadding(to stackView: UIStackView, width: CGFloat, key: String){
@@ -113,6 +116,8 @@ class KeyboardViewController: UIInputViewController {
 			keyboard = Constants.numberKeys
 		case .symbols: 
 			keyboard = Constants.symbolKeys
+        case .payments:
+            keyboard = Constants.paymentKeys
 		}
 		
 		let numRows = keyboard.count
@@ -156,7 +161,7 @@ class KeyboardViewController: UIInputViewController {
 				
 				//top row is longest row so it should decide button width 
 				print("button width: ", buttonWidth)
-				if key == "⌫" || key == "↩" || key == "#+=" || key == "ABC" || key == "123" || key == "⬆️" || key == "🌐"{
+				if key == "⌫" || key == "↩" || key == "#+=" || key == "ABC" || key == "123" || key == "⬆️" || key == "🌐" || key=="💳"{
 					button.widthAnchor.constraint(equalToConstant: buttonWidth + buttonWidth/2).isActive = true
 					button.layer.setValue(true, forKey: "isSpecial")
 					button.backgroundColor = Constants.specialKeyNormalColour
@@ -176,6 +181,13 @@ class KeyboardViewController: UIInputViewController {
 					button.layer.setValue(key, forKey: "original")
 					button.setTitle(key, for: .normal)
 				}
+                if(keyboardState == .payments){
+                    if key == "💳" {
+                        button.setTitle("💳 Generate checkout\(amount)", for: .normal)
+                        
+                    }
+                   
+                }
 			}
 		} 
 		
@@ -187,6 +199,7 @@ class KeyboardViewController: UIInputViewController {
 		case .numbers: 
 			break
 		case .symbols: break
+        case .payments: break
 		}
 		
 	}
@@ -196,6 +209,11 @@ class KeyboardViewController: UIInputViewController {
 		shiftButtonState = .normal
 		loadKeys()
 	}
+    func changeKeyboardToPaymentKeys(){
+        keyboardState = .payments
+        shiftButtonState = .normal
+        loadKeys()
+    }
 	func changeKeyboardToLetterKeys(){
 		keyboardState = .letters
 		loadKeys()
@@ -220,7 +238,16 @@ class KeyboardViewController: UIInputViewController {
 				shiftButtonState = .normal
 				loadKeys()
 			}
-			handlDeleteButtonPressed()
+            if(keyboardState != .payments){
+                handlDeleteButtonPressed()
+            }
+            if(keyboardState == .payments){
+                if(amount != ":"){
+                  amount.removeLast()
+                  loadKeys()
+                }
+                
+            }
 		case "space":
 			proxy.insertText(" ")
 		case "🌐":
@@ -233,6 +260,17 @@ class KeyboardViewController: UIInputViewController {
 			changeKeyboardToLetterKeys()
 		case "#+=":
 			changeKeyboardToSymbolKeys()
+        case "💳":
+            if(keyboardState != .payments){
+                changeKeyboardToPaymentKeys()
+            }else{
+                let defaultsToKeyboard = UserDefaults(suiteName: "group.user.storage")
+                let uid = defaultsToKeyboard?.object(forKey: "userUID")
+                amount.remove(at: amount.startIndex)
+                proxy.insertText("https://fresh.com/\(uid as! String)/cart?amount=\(amount)")
+                amount = ""
+            }
+           
 		case "⬆️": 
 			shiftButtonState = shiftButtonState == .normal ? .shift : .normal
 			loadKeys()
@@ -241,7 +279,19 @@ class KeyboardViewController: UIInputViewController {
 				shiftButtonState = .normal
 				loadKeys()
 			}
-			proxy.insertText(keyToDisplay)
+            if(keyboardState != .payments){
+                proxy.insertText(keyToDisplay)
+            }
+            if(keyboardState == .payments){
+                print(originalKey)
+                if(originalKey == "1" || originalKey=="2" || originalKey=="3" || originalKey=="4" || originalKey=="5" || originalKey == "6" || originalKey=="7" || originalKey=="8" || originalKey=="9" || originalKey=="0" || originalKey == "." || originalKey == "10" ||
+                    originalKey=="25" || originalKey == "50" || originalKey == "75" ||
+                    originalKey=="100" || originalKey == "500"){
+                    amount = "\(amount)\(originalKey)"
+                    loadKeys()
+                }
+            }
+			
 		}
 	}
 	
