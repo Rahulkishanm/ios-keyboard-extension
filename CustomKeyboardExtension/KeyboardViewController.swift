@@ -267,7 +267,7 @@ class KeyboardViewController: UIInputViewController {
                 let defaultsToKeyboard = UserDefaults(suiteName: "group.user.storage")
                 let uid = defaultsToKeyboard?.object(forKey: "userUID")
                 amount.remove(at: amount.startIndex)
-                proxy.insertText("https://fresh.com/\(uid as! String)/cart?amount=\(amount)")
+                proxy.insertText("https://freshcatch-700a3.firebaseapp.com/\(uid as! String)/cart?amount=\(amount)")
                 amount = ""
             }
            
